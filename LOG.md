@@ -123,3 +123,7 @@ the morning I can concentrate on getting some sounds made.
 Calling it a night, I'm exhusted 😴 I still haven't got the shift mechanic
 working but that's ok. I have a decent idea on how to implement it but it will
 take some refactoring.
+
+Also, pretty sure there's a memory leak. I left the game on the kill screen
+while I was freshening up and came back to an almost unresponsive machine 😳 I
+might look at that first thing tomorrow then move onto sound.
