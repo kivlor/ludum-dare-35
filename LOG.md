@@ -93,3 +93,33 @@ removing the `console.log` calls. Back to it!
 
 I have collisions working! Going to go have some dinner and relax a little. This
 night is far from over!
+
+#### 20:29
+
+Back from dinner and chores with a hot cup of tea 😊. I was thinking more about
+the shifting mechanic in the shower. Originally the shift mechanic would happen
+by driving over a 'shift' plate but now I'm thinking it's a could be a key
+press...
+
+Going to get the levels changing first then try them both out.
+
+#### 21:02
+
+Was investigating groups in Phaser to solve object ordering issue and discovered
+you can iterate group objects. Juist refactored the shit out of my moveObjects
+method, yeah!
+
+Ohhh, I also implemented a proper death screen instead of just restarting the
+state.
+
+#### 21:51
+
+Oh no, I did it again. Spent way too long in PS when I should be coding 🙄 Going
+to finish the night off on the shifter code. Hopefully I can get it done so in
+the morning I can concentrate on getting some sounds made.
+
+#### 22:14
+
+Calling it a night, I'm exhusted 😴 I still haven't got the shift mechanic
+working but that's ok. I have a decent idea on how to implement it but it will
+take some refactoring.
