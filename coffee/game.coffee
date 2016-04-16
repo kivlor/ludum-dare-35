@@ -22,6 +22,7 @@ loadState =
         game.load.image 'sea', '/images/sea.png'
         game.load.image 'air', '/images/air.png'
         game.load.image 'vehicle', '/images/vehicle.png'
+        game.load.image 'object', '/images/object.png'
 
     create: ->
         game.state.start 'play'
@@ -29,8 +30,11 @@ loadState =
 playState =
     init: ->
         # set initial vars
-        @.speed = 2
+        @.speed = 3
+        @.speedTimer = null
+
         @.objects = []
+        @.objectTimer = null
 
     create: ->
         # set cursor keys
@@ -52,11 +56,18 @@ playState =
         @.moveObjects()
 
         # collide things
+        game.physics.arcade.overlap @.player, @.objects, => @.killPlayer()
 
     createSpeedTimer: ->
-    createObjectTimer: ->
+        game.time.events.loop Phaser.Timer.SECOND*10, =>
+            unless @.speed is 6 then @.speed++
 
-    createTrack: -> @.track = game.add.tileSprite 0, -240, 256, 240*2, 'land'
+    createObjectTimer: ->
+        game.time.events.loop Phaser.Timer.SECOND*2, =>
+            unless game.rnd.normal() is 0 then @.createObject()
+
+    createTrack: ->
+        @.track = game.add.tileSprite 0, -240, 256, 240*2, 'land'
 
     moveTrack: ->
         # manually moving the track 'down' cause physics was hard :/
@@ -87,6 +98,32 @@ playState =
         else
             @.player.body.velocity.x = 0        
 
+    killPlayer: ->
+        # lazy reset for now
+        game.state.start 'play'
+
     createObject: ->
+        # randomly decide the x position
+        x = game.rnd.pick [40, 88, 136, 184]
+
+        # create the object
+        object = game.add.sprite x, -16, 'object'
+        game.physics.arcade.enable object
+        @.objects.push object
 
     moveObjects: ->
+        # no point moving nothing
+        unless @.objects.length > 0 then return
+
+        # loop the objects
+        count = 0
+        while @.objects.length > count
+            # clean up any objects that have fallen off
+            if @.objects[count].position.y > 240
+                @.objects[count].destroy()
+                @.objects.splice count, 1
+
+            # or move them
+            else
+                @.objects[count].position.y += @.speed
+                count++

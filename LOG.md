@@ -4,7 +4,7 @@
 
 #### 11:03
 
-Theme anounced as shapeshifting! So far my ideas are a racer where to progress
+Theme announced as shapeshifting! So far my ideas are a racer where to progress
 you need to shape shift into different vehicles and a platform where you have to
 shape shift into different animals/creatures...
 
@@ -15,9 +15,9 @@ walk to get supplies and think about it a bit more.
 
 #### 11:46
 
-Alright, the supply run helped heaps! Definatly sticking to the morphing racer
-idea. I think it'll be easiest to create it as an infinate runner that way I
-don't have to implement competitiors or anything. During polish I could possibly
+Alright, the supply run helped heaps! Defiantly sticking to the morphing racer
+idea. I think it'll be easiest to create it as an infinite runner that way I
+don't have to implement competitions or anything. During polish I could possibly
 hook up a leader board or something but we'll see.
 
 The idea will be before the transition between each course type the player has
@@ -29,7 +29,7 @@ air, sea or land... maybe I could work that into the game play.
 
 #### 12:11
 
-Been doodleing ideas in PS Sketch, going to start coding some of the primitives.
+Been doodling ideas in PS Sketch, going to start coding some of the primitives.
 
 #### 13:14
 
@@ -45,13 +45,13 @@ down and when it's y position hits 0 it gets reset. Problem is over time the
 velocity ramps up and it becomes a blur 😳
 
 I'm going to go make a coffee and think about the road a little more. My 
-current idea is to 'manually' update the road posistion each cycle but that's
+current idea is to 'manually' update the road position each cycle but that's
 going to take some time to implement.
 
 #### 15:33
 
 OMG, progress! I've the track moving and reseting and I've added the initial
-vehicle. There's a 'bump' when the track move back to it's home postion but
+vehicle. There's a 'bump' when the track move back to it's home position but
 that's fine for now.
 
 Going to keep working on the track, next step is to add the transition from one
@@ -68,3 +68,28 @@ saved myself some time!
 Haven't made much progress code wise but I've been reading a bunch on Phaser's
 timer functions. I'm planning on using them to slowly ramp up the speed as the
 game progresses, switch 'tracks' and to spawn objects.
+
+#### 17:53
+
+Tea time! I've got the speed increase timer implemented and I mocked up a test
+object (a road barricade) to use with the object timer. I also started looking
+at top down picture of boats and cars and did some sketches.
+
+My goal tonight is to have the track switching every 5 - 10 seconds and the
+vehicle morphing in place 😁
+
+#### 18:22
+
+I'm stuck on creating looping timers. My syntax looks correct and I'm not
+getting any errors in the browser console but nothing is happening 😭 What's
+worse is I can't move on because everything relies on timers. FML.
+
+#### 18:30
+
+Fuck me, timers are working! My habbit of refactoring ALL THE TIME had me
+removing the `console.log` calls. Back to it!
+
+#### 19:26
+
+I have collisions working! Going to go have some dinner and relax a little. This
+night is far from over!
