@@ -1,9 +1,9 @@
 bootState =
     create: ->
-        game.stage.backgroundColor = 0x008894
+        game.stage.backgroundColor = 0xbcc0c4
         
         game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
-        game.scale.setUserScale(3, 3);
+        game.scale.setUserScale(2, 2);
 
         game.renderer.renderSession.roundPixels = true;
         Phaser.Canvas.setImageRenderingCrisp game.canvas
@@ -18,61 +18,75 @@ loadState =
         loading.anchor.setTo 0.5, 0.5
         loading.text = 'loading'
 
-        game.load.image 'wall', 'images/wall.gif'
-        game.load.image 'player', 'images/player.gif'
+        game.load.image 'land', '/images/land.png'
+        game.load.image 'sea', '/images/sea.png'
+        game.load.image 'air', '/images/air.png'
+        game.load.image 'vehicle', '/images/vehicle.png'
 
     create: ->
         game.state.start 'play'
 
 playState =
+    init: ->
+        # set initial vars
+        @.speed = 2
+        @.objects = []
+
     create: ->
+        # set cursor keys
         @.cursorKeys = game.input.keyboard.createCursorKeys()
         @.jumpKey = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
-        
-        @.createWorld()
+
+        # start the speed and object timers
+        @.createSpeedTimer()
+        @.createObjectTimer()
+
+        # create the track and player
+        @.createTrack()
         @.createPlayer()
 
     update: ->
-        game.physics.arcade.collide @.player, @.walls
-
+        # move things around
+        @.moveTrack()
         @.movePlayer()
+        @.moveObjects()
 
-        unless @.player.inWorld then @.killPlayer()
+        # collide things
 
-    createWorld: ->
-        @.walls = game.add.group()
-        @.walls.enableBody = yes
+    createSpeedTimer: ->
+    createObjectTimer: ->
 
-        game.add.tileSprite 0, 0, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 168, 0, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 60, 60, 140, 2, 'wall', 0, @.walls        
-        game.add.tileSprite 0, 120, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 168, 120, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 60, 180, 140, 2, 'wall', 0, @.walls
-        game.add.tileSprite 0, 238, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 168, 238, 88, 2, 'wall', 0, @.walls
-        game.add.tileSprite 0, 0, 2, 240, 'wall', 0, @.walls
-        game.add.tileSprite 254, 0, 2, 240, 'wall', 0, @.walls
+    createTrack: -> @.track = game.add.tileSprite 0, -240, 256, 240*2, 'land'
 
-        @.walls.enableBody = yes
-        @.walls.setAll 'body.immovable', yes
+    moveTrack: ->
+        # manually moving the track 'down' cause physics was hard :/
+        if @.track.position.y < 0
+            @.track.position.y += @.speed
+        else
+            @.track.position.y = -240
 
     createPlayer: ->
-        @.player = game.add.sprite game.world.centerX, 0, 'player'
-        @.player.anchor.setTo 0.5, 1
-
+        @.player = game.add.sprite game.world.centerX, 206, 'vehicle'
+        @.player.anchor.setTo 0.5, 0.5
         game.physics.arcade.enable @.player
-        @.player.body.gravity.y = 750
 
     movePlayer: ->
-        if @.cursorKeys.left.isDown
-            @.player.body.velocity.x = -150
-        else if @.cursorKeys.right.isDown
-            @.player.body.velocity.x = 150
+        # up and down movement
+        if @.cursorKeys.up.isDown and @.player.position.y > 36
+            @.player.body.velocity.y = -160
+        else if @.cursorKeys.down.isDown and @.player.position.y < 206
+            @.player.body.velocity.y = 160
         else
-            @.player.body.velocity.x = 0
-        
-        if @.jumpKey.isDown and @.player.body.touching.down then @.player.body.velocity.y = -300
+            @.player.body.velocity.y = 0
 
-    killPlayer: ->
-        game.state.start 'play'
+        # left and right movement
+        if @.cursorKeys.left.isDown and @.player.position.x > 56
+            @.player.body.velocity.x = -160
+        else if @.cursorKeys.right.isDown and @.player.position.x < 200
+            @.player.body.velocity.x = 160  
+        else
+            @.player.body.velocity.x = 0        
+
+    createObject: ->
+
+    moveObjects: ->
