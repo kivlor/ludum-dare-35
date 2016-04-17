@@ -214,3 +214,38 @@ at least half way into the terrain (although this usually ends up being all the
 way in).
 
 I've even started cleaning up!
+
+#### 20:10
+
+Still cleaning up bits and pieces. I added a `gh-pages` branch and pushed that
+to github for hosting the final game. I also sent a link to lucas who didn't
+seem to mind it.
+
+I really want to create more graphics tonight to finish up. I won't have any
+time tomorrow seeing as howe I have work so this is it!
+
+#### 21:03
+
+Haven't quite finished with the cleanup but the only thing left is to fix the
+shifter position. It's close but I think there's a bug with the terrain hieghts
+so I'm adding some debugging.
+
+#### 21:55
+
+Bless Twinings Assam Bold 🙏 Powering through some new graphics for the air plus
+I've updated the sea terrain. Past that all I _really_ need to implement is a
+score so there's a sense of accomplishment then I'm done for the night!
+
+#### 22:30
+
+I've gone a bit overbaord with the graphics now 😳 Still need to create an air
+obstacle Once that's done I'll implement the per terrain obstacles and finally
+a distance counter. But first I'm going to shower to freshen up!
+
+#### 23:25
+
+I AM DONE. There's a few things on the todo list but I'm happy to submit what
+I've got. There should still be some time in the morning when I get up if I feel
+like adding anything more.
+
+EOF

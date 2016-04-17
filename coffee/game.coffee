@@ -1,3 +1,19 @@
+debugStyle = 
+    font: "normal 10px Verdana"
+    fill: '#fc589c'
+
+scoreStyle = 
+    font: "normal 12px Verdana"
+    fill: '#ffffff'
+    stroke: '#000000'
+    strokeThickness: 2
+
+textStyle = 
+    font: "normal 18px Verdana"
+    fill: '#ffffff'
+    stroke: '#000000'
+    strokeThickness: 4
+
 bootState =
     create: ->
         # setup the game canvas
@@ -18,21 +34,16 @@ bootState =
 loadState =
     preload: ->
         # add the loading text
-        loading = game.add.text game.world.centerX, game.world.centerY, ''
+        x = game.world.centerX
+        y = game.world.centerY
+        
+        loading = game.add.text x, y, 'loading...', textStyle
         loading.anchor.setTo 0.5, 0.5
-        loading.text = 'loading...'
 
-        # terrain
-        game.load.image 'land', 'images/land.png'
-        game.load.image 'sea', 'images/sea.png'
-        game.load.image 'air', 'images/air.png'
-
-        # objects
-        game.load.image 'barricade', 'images/barricade.png'
-        game.load.image 'shifter', 'images/shifter.png'
-
-        # vehicle
+        # sprites
+        game.load.spritesheet 'terrain', 'images/terrain.png', 256, 48
         game.load.spritesheet 'vehicle', 'images/vehicle.png', 24, 48
+        game.load.spritesheet 'obstacle', 'images/obstacle.png', 32, 32
 
         # audio
         game.load.audio 'running', 'audio/running.mp3'
@@ -45,10 +56,12 @@ loadState =
 menuState =
     create: ->
         # add the get ready text
-        ready = game.add.text game.world.centerX, game.world.centerY
-        ready.anchor.setTo 0.5, 0.5
-        ready.text = 'spacebar to start'
+        x = game.world.centerX
+        y = game.world.centerY
 
+        ready = game.add.text x, y, 'spacebar to start', textStyle
+        ready.anchor.setTo 0.5, 0.5
+        
         # add the spacebar input
         spacebar = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
         spacebar.onDown.addOnce => game.state.start 'play'
@@ -60,23 +73,29 @@ playState =
 
         # set some initial vars
         @speed = 4
+        @score = 0
+        @scorer = null
         @timer = game.time.create()
 
-        # create the track data
-        @trackData =
+        # create the terrain data
+        @terrainData =
             land:
                 name: 'land'
                 vehicle: 'car'
-                obstacles: ['barricade']
+                obstacle: 1
             sea:
                 name: 'sea'
                 vehicle: 'boat'
-                obstacles: ['barricade']
+                obstacle: 2
+            air:
+                name: 'air'
+                vehicle: 'plane'
+                obstacle: 3
         
-        @trackNames = ['land', 'sea']
+        @terrainNames = ['land', 'sea', 'air']
 
-        # use land for the default track
-        @currentTerrain = @trackData.land
+        # use land for the default terrain
+        @currentTerrain = @terrainData.land
 
     create: ->
         # setup the inputs
@@ -93,15 +112,18 @@ playState =
         @playerLayer = game.add.group()
         @overlayLayer = game.add.group()
 
-        # create the player and tracks
+        # create the player and terrains
         @createPlayer()
         @createTerrains()
 
         # start the timers
-        # @createObjectTimer()
+        @createObstacleTimer()
         @createShiftTimer()
 
         @timer.start()
+
+        # add the scorer text
+        @scorer = game.add.text 4, 220, @score, scoreStyle
 
     update: ->
         # make sure the player isn't dead first
@@ -112,7 +134,7 @@ playState =
             (player, terrain) =>
                 if @player.vehicle isnt terrain.vehicle then @killPlayer()
             (player, terrain) =>
-                # we only care about the upcoming track
+                # we only care about the upcoming terrain
                 if terrain.name isnt @currentTerrain.name then return no
 
                 # get bottom y of both
@@ -134,57 +156,66 @@ playState =
         @moveTerrains()
         @moveObjects()
 
-    createObjectTimer: ->
-        @timer.loop @SECOND*2, =>
-            unless game.rnd.normal() is 0 then @createObject()
+        # update the score
+        @updateScore()
+
+    createObstacleTimer: ->
+        @timer.loop @SECOND*2.5, =>
+            @createObstacle()
 
     createShiftTimer: ->
-        @timer.loop @SECOND*5, =>
-            # shift the track over
+        @timer.loop @SECOND*8, =>
+            # shift the terrain over
             @shiftTerrains()
 
             # add the shifter tile
             @createShifter()
 
     createTerrains: ->
-        # loop track data
-        for index, data of @trackData
+        # count for frame
+        frame = 0
+
+        # loop terrain data
+        for index, data of @terrainData
             # first in, best dressed
             y = unless index is @currentTerrain.name then -480 else -240
 
-            # create the track sprite
-            track = game.add.tileSprite 0, y, 256, 480, data.name
-            game.physics.arcade.enable track
+            # create the terrain sprite
+            terrain = game.add.tileSprite 0, y, 256, 480, 'terrain', frame
+            game.physics.arcade.enable terrain
 
-            # attach details to the track
-            track.name = data.name
-            track.vehicle = data.vehicle
-            track.obstacles = data.obstacles
+            # attach details to the terrain
+            terrain.name = data.name
+            terrain.vehicle = data.vehicle
+            terrain.obstacles = data.obstacles
 
-            # attach the track to the terrain layer
-            @terrainLayer.add track
+            # attach the terrain to the terrain layer
+            @terrainLayer.add terrain
+
+            # increment the frame
+            frame++
 
     shiftTerrains: ->
-        # decide next track
-        next = game.rnd.pick @trackNames
-        next = game.rnd.pick @trackNames while next is @currentTerrain.name
+        # decide next terrain
+        next = game.rnd.pick @terrainNames
+        next = game.rnd.pick @terrainNames while next is @currentTerrain.name
 
-        # change current track
-        @currentTerrain = @trackData[next]
+        # change current terrain
+        @currentTerrain = @terrainData[next]
 
     moveTerrains: ->
         # loop the objects
-        @terrainLayer.forEach (track) =>
-            if track.name is @currentTerrain.name
-                if track.position.y < 0
-                    track.position.y = track.position.y + @speed
+        @terrainLayer.forEach (terrain) =>
+            if terrain.name is @currentTerrain.name
+                if terrain.position.y < 0
+                    terrain.position.y = terrain.position.y + @speed
                 else
-                    track.position.y = -240
-            else if track.position.y > -480
-                if track.position.y < 240
-                    track.position.y = track.position.y + @speed
+                    terrain.position.y = -240
+            else if terrain.position.y > -480
+                if terrain.position.y < 240
+                    terrain.position.y = terrain.position.y + @speed
                 else
-                    track.position.y = -480
+                    terrain.position.y = -480
 
     createPlayer: ->
         # create the player sprite
@@ -196,6 +227,7 @@ playState =
         # add frames
         @player.animations.add 'car', [0], 1, yes
         @player.animations.add 'boat', [1], 1, yes
+        @player.animations.add 'plane', [2], 1, yes
         
         # set current vehicle
         @player.animations.play @currentTerrain.vehicle
@@ -242,9 +274,12 @@ playState =
         @crashSound.play()
 
         # add the reset text
-        reset = game.add.text game.world.centerX, game.world.centerY
+        # add the loading text
+        x = game.world.centerX
+        y = game.world.centerY
+        
+        reset = game.add.text x, y, 'spacebar to restart', textStyle
         reset.anchor.setTo 0.5, 0.5
-        reset.text = 'spacebar to retry'
 
         # add the spacebar input
         spacebar = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
@@ -254,7 +289,7 @@ playState =
         # only needs to happen once
         unless @player.vehicle isnt @currentTerrain.vehicle then return
 
-        # switch player frame to track frame
+        # switch player frame to terrain frame
         @player.animations.play @currentTerrain.vehicle
         @player.vehicle = @currentTerrain.vehicle
 
@@ -266,22 +301,22 @@ playState =
         x = game.rnd.pick [40, 88, 136, 184]
 
         # y position should be between terrains
-        y = @currentTerrain
+        y = -16
 
         # create the shifter
-        object = game.add.sprite x, 8, 'shifter'
+        object = game.add.sprite x, y, 'obstacle', 0
         object.type = 'shifter'
         game.physics.arcade.enable object
 
         # add to object layer
         @objectLayer.add object
 
-    createObject: ->
+    createObstacle: ->
         # randomly decide the x position
         x = game.rnd.pick [40, 88, 136, 184]
 
         # create the object
-        object = game.add.sprite x, -16, 'barricade'
+        object = game.add.sprite x, -32, 'obstacle', @currentTerrain.obstacle
         object.type = 'obstacle'
         game.physics.arcade.enable object
         
@@ -294,7 +329,11 @@ playState =
 
         # loop the objects
         @objectLayer.forEach (object) =>
-            if object.position.y > 240 
+            if object.position.y > 240
                 object.destroy()
             else
                 object.position.y += @.speed
+
+    updateScore: ->
+        @score++
+        @scorer.text = Math.floor @score/4
