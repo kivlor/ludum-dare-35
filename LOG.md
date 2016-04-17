@@ -86,7 +86,7 @@ worse is I can't move on because everything relies on timers. FML.
 
 #### 18:30
 
-Fuck me, timers are working! My habbit of refactoring ALL THE TIME had me
+Fuck me, timers are working! My habit of refactoring ALL THE TIME had me
 removing the `console.log` calls. Back to it!
 
 #### 19:26
@@ -106,7 +106,7 @@ Going to get the levels changing first then try them both out.
 #### 21:02
 
 Was investigating groups in Phaser to solve object ordering issue and discovered
-you can iterate group objects. Juist refactored the shit out of my moveObjects
+you can iterate group objects. Just refactored the shit out of my moveObjects
 method, yeah!
 
 Ohhh, I also implemented a proper death screen instead of just restarting the
@@ -120,7 +120,7 @@ the morning I can concentrate on getting some sounds made.
 
 #### 22:14
 
-Calling it a night, I'm exhusted 😴 I still haven't got the shift mechanic
+Calling it a night, I'm exhausted 😴 I still haven't got the shift mechanic
 working but that's ok. I have a decent idea on how to implement it but it will
 take some refactoring.
 
@@ -138,7 +138,7 @@ then I'll move on to adding some sounds 😬
 
 #### 09:00
 
-Spent some time refactoring, adding a menu state and procastinating on the
+Spent some time refactoring, adding a menu state and procrastinating on the
 shift mechanic...
 
 #### 09:48
@@ -160,9 +160,9 @@ Still working on shift mechanic, sooon.
 
 #### 11:43
 
-I've spent the last 40 minutes or so refactoring because I thought my initil
-track shif implementation was causing ta crash. Turns out there was an infinate
-loop happening when trying to determine the next track 😩 The current refcator
+I've spent the last 40 minutes or so refactoring because I thought my initial
+track shift implementation was causing the crash. Turns out there was an infinite
+loop happening when trying to determine the next track 😩 The current refactor
 _is_ simpler mind you so I'll stick to it.
 
 #### 11:54
@@ -182,3 +182,21 @@ on sounds.
 Shift mechanic done! There are bugs to clean up but that can come after I work
 on the sounds. But before any of that I'm going to post a progress update and go
 eat some lunch 😋
+
+#### 15:28
+
+Made some super basic sounds in Pico-8. So far I have a running sound and a
+crash sound. Going to throw them into the game and get the kill screen
+happening after that.
+
+#### 16:06
+
+Bahhh, I've hit a wall. I've spent the last half hour dicking around on the
+interwebs. I think I need a proper break away from the screen for a while. I'll
+quickly finish what I was working on then go watch some TV.
+
+#### 16:40
+
+Wow, ended up doing a lot more then I thought. The game is in and almost viable
+state now. I've created a little todo list in order of priority. Going to
+finally take the TV break 😬

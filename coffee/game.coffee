@@ -34,18 +34,19 @@ loadState =
         # vehicle
         game.load.spritesheet 'vehicle', '/images/vehicle.png', 24, 48
 
+        # audio
+        game.load.audio 'running', 'audio/running.mp3'
+        game.load.audio 'crash', 'audio/crash.mp3'
+
     create: ->
         game.state.start 'menu'
 
 menuState =
-    init: ->
-        @TEXT = 'spacebar to start'
-
     create: ->
         # add the get ready text
         ready = game.add.text game.world.centerX, game.world.centerY
         ready.anchor.setTo 0.5, 0.5
-        ready.text = @TEXT
+        ready.text = 'spacebar to start'
 
         # add the spacebar input
         spacebar = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
@@ -59,10 +60,8 @@ playState =
         # set initial game speed
         @speed = 4
 
-        # and setup all the timers
-        @speedTimer = null
-        @objectTimer = null
-        @trackTimer = null
+        # set initial timer
+        @timer = null
 
         # create the track data
         @trackData =
@@ -81,9 +80,16 @@ playState =
         @currentTrack = @trackData.land
 
     create: ->
+        # create a customer timer
+        @timer = game.time.create()
+
         # setup the inputs
         @cursorKeys = game.input.keyboard.createCursorKeys()
         @resetKey = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
+
+        # add the sounds
+        @runningSound = game.add.audio 'running'
+        @crashSound = game.add.audio 'crash'
 
         # setup the layers (groups)
         @terrainLayer = game.add.group()
@@ -100,7 +106,11 @@ playState =
         @createObjectTimer()
         @createShiftTimer()
 
+        @timer.start()
+
     update: ->
+        unless @player.isAlive then return
+
         # move things around
         @movePlayer()
         @moveTracks()
@@ -113,18 +123,17 @@ playState =
             else
                 @shiftPlayer()
 
-        #game.physics.arcade.overlap @player, @terrainLayer, (player, terrain) =>
 
     createSpeedTimer: ->
-        @speedTimer = game.time.events.loop @SECOND*10, =>
+        @timer.loop @SECOND*10, =>
             unless @speed is 6 then @speed++
 
     createObjectTimer: ->
-        @objectTimer = game.time.events.loop @SECOND*2, =>
+        @timer.loop @SECOND*2, =>
             unless game.rnd.normal() is 0 then @createObject()
 
     createShiftTimer: ->
-        @trackTimer = game.time.events.loop @SECOND*5, =>
+        @timer.loop @SECOND*5, =>
             # add the shifter tile
             @createShifter()
 
@@ -173,18 +182,28 @@ playState =
     createPlayer: ->
         # create the player sprite
         @player = game.add.sprite game.world.centerX, 206, 'vehicle'
+        @player.isAlive = yes
         @player.anchor.setTo 0.5, 0.5
         game.physics.arcade.enable @player
 
         # add frames
-        @.player.animations.add 'car', [0], 1, yes
-        @.player.animations.add 'boat', [1], 1, yes
-        @.player.animations.play
+        @player.animations.add 'car', [0], 1, yes
+        @player.animations.add 'boat', [1], 1, yes
+        
+        # set current vehicle
+        @player.animations.play @currentTrack.vehicle
+        @player.vehicle = @currentTrack.vehicle
 
         # attach the player layer
         @playerLayer.add @player
 
+        # play the running sound
+        @runningSound.loopFull()
+
     movePlayer: ->
+        # dead players don't move
+        unless @player.isAlive then return
+
         # up and down movement
         if @cursorKeys.up.isDown and @player.position.y > 36
             @player.body.velocity.y = -160
@@ -202,8 +221,30 @@ playState =
             @player.body.velocity.x = 0
 
     killPlayer: ->
-        # back to menu state
-        game.state.start 'menu'
+        # stop movement
+        @speed = 0
+
+        # stop the timers
+        @timer.removeAll()
+        @timer.stop()
+
+        # kill the player
+        @player.isAlive = no
+        @player.body.velocity.x = 0
+        @player.body.velocity.y = 0
+        @runningSound.stop()
+
+        # play the crash sound
+        @crashSound.play()
+
+        # add the reset text
+        reset = game.add.text game.world.centerX, game.world.centerY
+        reset.anchor.setTo 0.5, 0.5
+        reset.text = 'spacebar to retry'
+
+        # add the spacebar input
+        spacebar = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
+        spacebar.onDown.addOnce => game.state.start 'play'
 
     shiftPlayer: ->
         # switch player frame to track frame
