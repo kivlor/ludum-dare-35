@@ -127,3 +127,58 @@ take some refactoring.
 Also, pretty sure there's a memory leak. I left the game on the kill screen
 while I was freshening up and came back to an almost unresponsive machine 😳 I
 might look at that first thing tomorrow then move onto sound.
+
+### 17/04/2105
+
+#### 08:35
+
+Day 2! Starting out by quickly implementing a menu state then I'm going to try
+tackle the shift mechanic. Giving myself until 10:00 to get that working and
+then I'll move on to adding some sounds 😬
+
+#### 09:00
+
+Spent some time refactoring, adding a menu state and procastinating on the
+shift mechanic...
+
+#### 09:48
+
+10am is looming and I've made very little progress on the shift mechanic, fuck!
+pushing my 'switch to sounds' deadline to 11am as the shift mechanic is vital.
+
+Sounds _should_ be easy enough, I basically need:
+* running sound
+* crash sound
+* shift sound
+
+If I get time I'll go back and add a little tune to play in the background as
+well.
+
+#### 11:00
+
+Still working on shift mechanic, sooon.
+
+#### 11:43
+
+I've spent the last 40 minutes or so refactoring because I thought my initil
+track shif implementation was causing ta crash. Turns out there was an infinate
+loop happening when trying to determine the next track 😩 The current refcator
+_is_ simpler mind you so I'll stick to it.
+
+#### 11:54
+
+I've crashed Chrome so many times in the last hour. I think it's time for a cup
+of tea...
+
+#### 12:38
+
+Still struggling with the shift mechanic. I have a super weird bug with the
+terrain layers not reset when they should and it's really staring to hurt my. If
+I can't work this out by 1pm then I'm going to grab lunch and come back to work
+on sounds.
+
+#### 13:10
+
+Shift mechanic done! There are bugs to clean up but that can come after I work
+on the sounds. But before any of that I'm going to post a progress update and go
+eat some lunch 😋

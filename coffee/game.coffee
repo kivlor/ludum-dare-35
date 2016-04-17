@@ -1,19 +1,23 @@
 bootState =
     create: ->
-        game.stage.backgroundColor = 0xbcc0c4
-        
+        # setup the game canvas
         game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
         game.scale.setUserScale(2, 2);
 
+        # make those pixels crisp
         game.renderer.renderSession.roundPixels = true;
         Phaser.Canvas.setImageRenderingCrisp game.canvas
-        
+            
+        # add some physics
         game.physics.startSystem Phaser.Physics.ARCADE
 
+        # colour and load!
+        game.stage.backgroundColor = 0xFCD884
         game.state.start 'load'
 
 loadState =
     preload: ->
+        # add the loading text
         loading = game.add.text game.world.centerX, game.world.centerY, ''
         loading.anchor.setTo 0.5, 0.5
         loading.text = 'loading...'
@@ -25,134 +29,197 @@ loadState =
 
         # objects
         game.load.image 'barricade', '/images/barricade.png'
-        game.load.image 'shift', '/images/shift.png'
+        game.load.image 'shifter', '/images/shifter.png'
 
-        # vehicles
-        game.load.image 'car', '/images/car.png'
-        game.load.image 'boat', '/images/boat.png'
+        # vehicle
+        game.load.spritesheet 'vehicle', '/images/vehicle.png', 24, 48
 
     create: ->
-        game.state.start 'play'
+        game.state.start 'menu'
+
+menuState =
+    init: ->
+        @TEXT = 'spacebar to start'
+
+    create: ->
+        # add the get ready text
+        ready = game.add.text game.world.centerX, game.world.centerY
+        ready.anchor.setTo 0.5, 0.5
+        ready.text = @TEXT
+
+        # add the spacebar input
+        spacebar = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
+        spacebar.onDown.addOnce => game.state.start 'play'
 
 playState =
     init: ->
-        # set initial vars
-        @.speed = 3
-        @.speedTimer = null
+        # smaller var names are smaller
+        @SECOND = Phaser.Timer.SECOND
 
-        @.objects = []
-        @.objectTimer = null
+        # set initial game speed
+        @speed = 4
+
+        # and setup all the timers
+        @speedTimer = null
+        @objectTimer = null
+        @trackTimer = null
+
+        # create the track data
+        @trackData =
+            land:
+                name: 'land'
+                vehicle: 'car'
+                obstacles: ['barricade']
+            sea:
+                name: 'sea'
+                vehicle: 'boat'
+                obstacles: ['barricade']
         
-        @.trackTimer = null
+        @trackNames = ['land', 'sea']
+
+        # use land for the default track
+        @currentTrack = @trackData.land
 
     create: ->
-        # set cursor keys
-        @.cursorKeys = game.input.keyboard.createCursorKeys()
-        @.jumpKey = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
+        # setup the inputs
+        @cursorKeys = game.input.keyboard.createCursorKeys()
+        @resetKey = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
 
         # setup the layers (groups)
-        @.terrainLayer = game.add.group()
-        @.objectLayer = game.add.group()
-        @.playerLayer = game.add.group()
-        @.overlayLayer = game.add.group()
+        @terrainLayer = game.add.group()
+        @objectLayer = game.add.group()
+        @playerLayer = game.add.group()
+        @overlayLayer = game.add.group()
 
-        # create the track and player
-        @.createTrack()
-        @.createPlayer()
+        # create the player and tracks
+        @createPlayer()
+        @createTracks()
 
         # start the timers
-        @.createSpeedTimer()
-        @.createObjectTimer()
-        @.createTrackTimer()
+        # @createSpeedTimer()
+        @createObjectTimer()
+        @createShiftTimer()
 
     update: ->
-        # collide things
-        game.physics.arcade.overlap @.player, @.objectLayer, => @.killPlayer()
-
         # move things around
-        @.moveTrack()
-        @.movePlayer()
-        @.moveObjects()
+        @movePlayer()
+        @moveTracks()
+        @moveObjects()
 
-        # listen for revive
-        @.revivePlayer()
+        # collide things
+        game.physics.arcade.overlap @player, @objectLayer, (player, object) =>
+            if object.type is 'obstacle'
+                @killPlayer()
+            else
+                @shiftPlayer()
+
+        #game.physics.arcade.overlap @player, @terrainLayer, (player, terrain) =>
 
     createSpeedTimer: ->
-        @.speedTimer = game.time.events.loop Phaser.Timer.SECOND*10, =>
-            unless @.speed is 6 then @.speed++
+        @speedTimer = game.time.events.loop @SECOND*10, =>
+            unless @speed is 6 then @speed++
 
     createObjectTimer: ->
-        @.objectTimer = game.time.events.loop Phaser.Timer.SECOND*2, =>
-            unless game.rnd.normal() is 0 then @.createObject()
+        @objectTimer = game.time.events.loop @SECOND*2, =>
+            unless game.rnd.normal() is 0 then @createObject()
 
-    createTrackTimer: ->
-        @.trackTimer = game.time.events.loop Phaser.Timer.SECOND*15, =>
-            @.switchTrack()
+    createShiftTimer: ->
+        @trackTimer = game.time.events.loop @SECOND*5, =>
+            # add the shifter tile
+            @createShifter()
 
-    createTrack: ->
-        @.track = game.add.tileSprite 0, -240, 256, 240*2, 'land'
+            # shift the track over
+            @shiftTracks()
 
-        @.terrainLayer.add @.track
+    createTracks: ->
+        # loop track data
+        for index, data of @trackData
+            # first in, best dressed
+            y = unless index is @currentTrack.name then -480 else -240
 
-    moveTrack: ->
-        # manually moving the track 'down' cause physics was hard :/
-        if @.track.position.y < 0
-            @.track.position.y += @.speed
-        else
-            @.track.position.y = -240
+            # create the track sprite
+            track = game.add.tileSprite 0, y, 256, 480, data.name
+            
+            # attach details to the track
+            track.name = data.name
+            track.vehicle = data.vehicle
+            track.obstacles = data.obstacles
+
+            # attach the track to the terrain layer
+            @terrainLayer.add track
+
+    shiftTracks: ->
+        # decide next track
+        next = game.rnd.pick @trackNames
+        next = game.rnd.pick @trackNames while next is @currentTrack.name
+
+        # change current track
+        @currentTrack = @trackData[next]
+
+    moveTracks: ->
+        # loop the objects
+        @terrainLayer.forEach (track) =>
+            if track.name is @currentTrack.name
+                if track.position.y < 0
+                    track.position.y = track.position.y + @speed
+                else
+                    track.position.y = -240
+            else if track.position.y > -480
+                if track.position.y < 240
+                    track.position.y = track.position.y + @speed
+                else
+                    track.position.y = -480
 
     createPlayer: ->
-        @.player = game.add.sprite game.world.centerX, 206, 'car'
-        @.player.anchor.setTo 0.5, 0.5
-        game.physics.arcade.enable @.player
+        # create the player sprite
+        @player = game.add.sprite game.world.centerX, 206, 'vehicle'
+        @player.anchor.setTo 0.5, 0.5
+        game.physics.arcade.enable @player
 
-        @.playerLayer.add @.player
+        # add frames
+        @.player.animations.add 'car', [0], 1, yes
+        @.player.animations.add 'boat', [1], 1, yes
+        @.player.animations.play
+
+        # attach the player layer
+        @playerLayer.add @player
 
     movePlayer: ->
-        # can't move a dead player
-        unless @.player.alive is true then return 
-
         # up and down movement
-        if @.cursorKeys.up.isDown and @.player.position.y > 36
-            @.player.body.velocity.y = -160
-        else if @.cursorKeys.down.isDown and @.player.position.y < 206
-            @.player.body.velocity.y = 160
+        if @cursorKeys.up.isDown and @player.position.y > 36
+            @player.body.velocity.y = -160
+        else if @cursorKeys.down.isDown and @player.position.y < 206
+            @player.body.velocity.y = 160
         else
-            @.player.body.velocity.y = 0
+            @player.body.velocity.y = 0
 
         # left and right movement
-        if @.cursorKeys.left.isDown and @.player.position.x > 56
-            @.player.body.velocity.x = -160
-        else if @.cursorKeys.right.isDown and @.player.position.x < 200
-            @.player.body.velocity.x = 160  
+        if @cursorKeys.left.isDown and @player.position.x > 56
+            @player.body.velocity.x = -160
+        else if @cursorKeys.right.isDown and @player.position.x < 200
+            @player.body.velocity.x = 160  
         else
-            @.player.body.velocity.x = 0        
+            @player.body.velocity.x = 0
 
     killPlayer: ->
-        # kill the player
-        @.player.alive = no
-        @.player.body.velocity.x = 0
-        @.player.body.velocity.y = 0
-        
-        # set the game speed to 0
-        @.speed = 0
+        # back to menu state
+        game.state.start 'menu'
 
-        # stop the timers
-        game.time.events.remove @.speedTimer
-        game.time.events.remove @.objectTimer
+    shiftPlayer: ->
+        # switch player frame to track frame
+        @player.animations.play @currentTrack.vehicle
 
-        # show the game over text
-        retry = game.add.text game.world.centerX, game.world.centerY, ''
-        retry.anchor.setTo 0.5, 0.5
-        retry.text = 'spacebar to retry'
+    createShifter: ->
+        # randomly decide the x position
+        x = game.rnd.pick [40, 88, 136, 184]
 
-        @.overlayLayer.add retry
+        # create the shifter
+        object = game.add.sprite x, 8, 'shifter'
+        object.type = 'shifter'
+        game.physics.arcade.enable object
 
-    revivePlayer: ->
-        # can't move a revive what isn't dead
-        unless @.player.alive is false then return
-
-        if @.jumpKey.isDown then game.state.start 'play'
+        # add to object layer
+        @objectLayer.add object
 
     createObject: ->
         # randomly decide the x position
@@ -164,28 +231,15 @@ playState =
         game.physics.arcade.enable object
         
         # add to object layer
-        @.objectLayer.add object
+        @objectLayer.add object
 
     moveObjects: ->
         # no point moving nothing
-        unless @.objectLayer.length > 0 then return
+        unless @objectLayer.length > 0 then return
 
         # loop the objects
-        @.objectLayer.forEach (child) =>
-            if child.position.y > 240 
-                child.destroy
+        @objectLayer.forEach (object) =>
+            if object.position.y > 240 
+                object.destroy()
             else
-                child.position.y += @.speed
-
-    createShifter: ->
-        # randomly decide the x position
-        x = game.rnd.pick [40, 88, 136, 184]
-
-        # create the shifter
-        object = game.add.sprite x, -16, 'shifter'
-        object.type = 'shifter'
-        game.physics.arcade.enable object
-
-        # add to object layer
-        @.objectLayer.add object
-        
+                object.position.y += @.speed
