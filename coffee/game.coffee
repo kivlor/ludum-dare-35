@@ -23,16 +23,16 @@ loadState =
         loading.text = 'loading...'
 
         # terrain
-        game.load.image 'land', '/images/land.png'
-        game.load.image 'sea', '/images/sea.png'
-        game.load.image 'air', '/images/air.png'
+        game.load.image 'land', 'images/land.png'
+        game.load.image 'sea', 'images/sea.png'
+        game.load.image 'air', 'images/air.png'
 
         # objects
-        game.load.image 'barricade', '/images/barricade.png'
-        game.load.image 'shifter', '/images/shifter.png'
+        game.load.image 'barricade', 'images/barricade.png'
+        game.load.image 'shifter', 'images/shifter.png'
 
         # vehicle
-        game.load.spritesheet 'vehicle', '/images/vehicle.png', 24, 48
+        game.load.spritesheet 'vehicle', 'images/vehicle.png', 24, 48
 
         # audio
         game.load.audio 'running', 'audio/running.mp3'
