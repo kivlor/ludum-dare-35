@@ -58,11 +58,9 @@ playState =
         # smaller var names are smaller
         @SECOND = Phaser.Timer.SECOND
 
-        # set initial game speed
+        # set some initial vars
         @speed = 4
-
-        # set initial timer
-        @timer = null
+        @timer = game.time.create()
 
         # create the track data
         @trackData =
@@ -78,15 +76,11 @@ playState =
         @trackNames = ['land', 'sea']
 
         # use land for the default track
-        @currentTrack = @trackData.land
+        @currentTerrain = @trackData.land
 
     create: ->
-        # create a customer timer
-        @timer = game.time.create()
-
         # setup the inputs
         @cursorKeys = game.input.keyboard.createCursorKeys()
-        @resetKey = game.input.keyboard.addKey Phaser.Keyboard.SPACEBAR
 
         # add the sounds
         @runningSound = game.add.audio 'running'
@@ -101,33 +95,44 @@ playState =
 
         # create the player and tracks
         @createPlayer()
-        @createTracks()
+        @createTerrains()
 
         # start the timers
-        # @createSpeedTimer()
-        @createObjectTimer()
+        # @createObjectTimer()
         @createShiftTimer()
 
         @timer.start()
 
     update: ->
+        # make sure the player isn't dead first
         unless @player.isAlive then return
 
-        # move things around
-        @movePlayer()
-        @moveTracks()
-        @moveObjects()
+        # collide player with bad terrain
+        game.physics.arcade.overlap @player, @terrainLayer,
+            (player, terrain) =>
+                if @player.vehicle isnt terrain.vehicle then @killPlayer()
+            (player, terrain) =>
+                # we only care about the upcoming track
+                if terrain.name isnt @currentTerrain.name then return no
 
-        # collide things
+                # get bottom y of both
+                playerY = player.position.y + 24
+                terrainY = terrain.position.y + 480
+
+                # if player y is larger then they all in
+                unless playerY < terrainY then return no else return yes
+
+        # collide player with objects
         game.physics.arcade.overlap @player, @objectLayer, (player, object) =>
             if object.type is 'obstacle'
                 @killPlayer()
             else
                 @shiftPlayer()
 
-    createSpeedTimer: ->
-        @timer.loop @SECOND*10, =>
-            unless @speed is 6 then @speed++
+        # move things around
+        @movePlayer()
+        @moveTerrains()
+        @moveObjects()
 
     createObjectTimer: ->
         @timer.loop @SECOND*2, =>
@@ -135,21 +140,22 @@ playState =
 
     createShiftTimer: ->
         @timer.loop @SECOND*5, =>
+            # shift the track over
+            @shiftTerrains()
+
             # add the shifter tile
             @createShifter()
 
-            # shift the track over
-            @shiftTracks()
-
-    createTracks: ->
+    createTerrains: ->
         # loop track data
         for index, data of @trackData
             # first in, best dressed
-            y = unless index is @currentTrack.name then -480 else -240
+            y = unless index is @currentTerrain.name then -480 else -240
 
             # create the track sprite
             track = game.add.tileSprite 0, y, 256, 480, data.name
-            
+            game.physics.arcade.enable track
+
             # attach details to the track
             track.name = data.name
             track.vehicle = data.vehicle
@@ -158,18 +164,18 @@ playState =
             # attach the track to the terrain layer
             @terrainLayer.add track
 
-    shiftTracks: ->
+    shiftTerrains: ->
         # decide next track
         next = game.rnd.pick @trackNames
-        next = game.rnd.pick @trackNames while next is @currentTrack.name
+        next = game.rnd.pick @trackNames while next is @currentTerrain.name
 
         # change current track
-        @currentTrack = @trackData[next]
+        @currentTerrain = @trackData[next]
 
-    moveTracks: ->
+    moveTerrains: ->
         # loop the objects
         @terrainLayer.forEach (track) =>
-            if track.name is @currentTrack.name
+            if track.name is @currentTerrain.name
                 if track.position.y < 0
                     track.position.y = track.position.y + @speed
                 else
@@ -192,8 +198,8 @@ playState =
         @player.animations.add 'boat', [1], 1, yes
         
         # set current vehicle
-        @player.animations.play @currentTrack.vehicle
-        @player.vehicle = @currentTrack.vehicle
+        @player.animations.play @currentTerrain.vehicle
+        @player.vehicle = @currentTerrain.vehicle
 
         # attach the player layer
         @playerLayer.add @player
@@ -222,9 +228,6 @@ playState =
             @player.body.velocity.x = 0
 
     killPlayer: ->
-        # stop movement
-        @speed = 0
-
         # stop the timers
         @timer.removeAll()
         @timer.stop()
@@ -248,8 +251,12 @@ playState =
         spacebar.onDown.addOnce => game.state.start 'play'
 
     shiftPlayer: ->
+        # only needs to happen once
+        unless @player.vehicle isnt @currentTerrain.vehicle then return
+
         # switch player frame to track frame
-        @player.animations.play @currentTrack.vehicle
+        @player.animations.play @currentTerrain.vehicle
+        @player.vehicle = @currentTerrain.vehicle
 
         # play shitf song
         @shiftSound.play()
@@ -257,6 +264,9 @@ playState =
     createShifter: ->
         # randomly decide the x position
         x = game.rnd.pick [40, 88, 136, 184]
+
+        # y position should be between terrains
+        y = @currentTerrain
 
         # create the shifter
         object = game.add.sprite x, 8, 'shifter'

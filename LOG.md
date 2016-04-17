@@ -205,3 +205,12 @@ finally take the TV break 😬
 
 2 and a half hours later... TV break turned into dinner, oh well. Going to get 
 the terrain check implemented then start the cleanup.
+
+#### 19:21
+
+The terrain check is working like a treat. It checks 2 things, firstly the the
+terrain we're colliding with is the 'upcoming' terrain and that the vehicle is
+at least half way into the terrain (although this usually ends up being all the
+way in).
+
+I've even started cleaning up!
