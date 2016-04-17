@@ -7,3 +7,4 @@
 * loop terrain objects when creating instead of using barricade
 * create better running sound
 * bug partol!
+* use cicada principle (7, 13, or 17) for timers

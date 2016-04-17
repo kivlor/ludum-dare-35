@@ -200,3 +200,8 @@ quickly finish what I was working on then go watch some TV.
 Wow, ended up doing a lot more then I thought. The game is in and almost viable
 state now. I've created a little todo list in order of priority. Going to
 finally take the TV break 😬
+
+#### 18:39
+
+2 and a half hours later... TV break turned into dinner, oh well. Going to get 
+the terrain check implemented then start the cleanup.

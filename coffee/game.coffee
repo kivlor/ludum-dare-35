@@ -36,6 +36,7 @@ loadState =
 
         # audio
         game.load.audio 'running', 'audio/running.mp3'
+        game.load.audio 'shift', 'audio/shift.mp3'
         game.load.audio 'crash', 'audio/crash.mp3'
 
     create: ->
@@ -90,6 +91,7 @@ playState =
         # add the sounds
         @runningSound = game.add.audio 'running'
         @crashSound = game.add.audio 'crash'
+        @shiftSound = game.add.audio 'shift'
 
         # setup the layers (groups)
         @terrainLayer = game.add.group()
@@ -122,7 +124,6 @@ playState =
                 @killPlayer()
             else
                 @shiftPlayer()
-
 
     createSpeedTimer: ->
         @timer.loop @SECOND*10, =>
@@ -249,6 +250,9 @@ playState =
     shiftPlayer: ->
         # switch player frame to track frame
         @player.animations.play @currentTrack.vehicle
+
+        # play shitf song
+        @shiftSound.play()
 
     createShifter: ->
         # randomly decide the x position
